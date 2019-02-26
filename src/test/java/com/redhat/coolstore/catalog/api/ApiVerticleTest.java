@@ -36,16 +36,14 @@ import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.ext.auth.jwt.JWTAuth;
+import io.vertx.ext.auth.jwt.JWTOptions;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
-
-import io.vertx.ext.auth.jwt.JWTAuth;
-import io.vertx.ext.web.handler.AuthHandler;
-import io.vertx.ext.web.handler.JWTAuthHandler;
-
 
 @RunWith(VertxUnitRunner.class)
 public class ApiVerticleTest {
@@ -139,8 +137,6 @@ public class ApiVerticleTest {
                 .exceptionHandler(context.exceptionHandler());
             })
             .exceptionHandler(context.exceptionHandler())
-            .putHeader("Content-type", "application/json")
-            .putHeader("Content-length", length)
             .putHeader(HttpHeaders.AUTHORIZATION, "Bearer " + generateTokenWithRole("coolstore", true))
             .end();
     }
@@ -177,8 +173,6 @@ public class ApiVerticleTest {
                 .exceptionHandler(context.exceptionHandler());
             })
             .exceptionHandler(context.exceptionHandler())
-            .putHeader("Content-type", "application/json")
-            .putHeader("Content-length", length)
             .putHeader(HttpHeaders.AUTHORIZATION, "Bearer " + generateTokenWithRole("coolstore", true))
             .end();
     }
@@ -199,8 +193,6 @@ public class ApiVerticleTest {
                 async.complete();
             })
             .exceptionHandler(context.exceptionHandler())
-            .putHeader("Content-type", "application/json")
-            .putHeader("Content-length", length)
             .putHeader(HttpHeaders.AUTHORIZATION, "Bearer " + generateTokenWithRole("coolstore", true))
             .end();
     }
@@ -224,10 +216,11 @@ public class ApiVerticleTest {
                 .put("price", new Double(100.0));
         String body = json.encodePrettily();
         String length = Integer.toString(body.length());
-       /* vertx.createHttpClient().post(port, "localhost", "/product")
+        vertx.createHttpClient().post(port, "localhost", "/product")
             .exceptionHandler(context.exceptionHandler())
             .putHeader("Content-type", "application/json")
             .putHeader("Content-length", length)
+            .putHeader(HttpHeaders.AUTHORIZATION, "Bearer " + generateTokenWithRole("coolstore", true))
             .handler(response -> {
                 assertThat(response.statusCode(), equalTo(201));
                 ArgumentCaptor<Product> argument = ArgumentCaptor.forClass(Product.class);
@@ -236,21 +229,7 @@ public class ApiVerticleTest {
                 async.complete();
             })
             .write(body)
-            .end();*/
-        vertx.createHttpClient().post(port, "localhost", "/product")
-    	     .exceptionHandler(context.exceptionHandler())
-             .putHeader("Content-type", "application/json")
-             .putHeader("Content-length", length)
-             .putHeader(HttpHeaders.AUTHORIZATION, "Bearer " + generateTokenWithRole("coolstore", true))
-             .handler(response -> {
-                  assertThat(response.statusCode(), equalTo(201));
-                  ArgumentCaptor<Product> argument = ArgumentCaptor.forClass(Product.class);
-                  verify(catalogService).addProduct(argument.capture(), any());
-                  assertThat(argument.getValue().getItemId(), equalTo(itemId));
-                  async.complete();
-             })
-             .write(body)
-             .end();
+            .end();
     }
 
     @Test
@@ -331,36 +310,43 @@ public class ApiVerticleTest {
             .exceptionHandler(context.exceptionHandler())
             .end();
     }
-
+    
     private JWTAuth getJWTAuthProviderForAuthentication() {
-    	JsonObject authConfig = new JsonObject()
-            .put("public-key", "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuEFE+W8W5R2mKjxFx46yWqRRwXJxez6jG4kx1lZ8Mld8pXnkiueya31RBIbCWn31XF6DZNAVUowKww7rwzAHVS34LkKLxvxry01Y7xxY2brYPuS2GNS0hIvDNB7bOaBreyEQBERgdBC47u2GAX85Gg4sCph1d8DmIZ0ZOD+wYQ5G1nuqJyBZFjb0ZY90YKqiN/cYdeDH1mNGI+WDXC2mGQC3S6PfjGmfgeMwd3sjmPMfGiYOF7hU/hL5aOX/E2i7IdIEgqipCQ5wuZtUAX3GsHN9dktWUaDMA8ZgSdpX68n4X9TDvI5XWLJ68v6SHJ5Vf3ikF8wUO5l3uH68kJ0j/QIDAQAB").put("permissionsClaimKey", "realm_access/roles")
-            .put("issuer", "token-issuer");
-   	return JWTAuth.create(vertx, authConfig);
+        JsonObject authConfig = new JsonObject()
+                .put("public-key", "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA6bNmNqNepZa05iCaLr91\r\n" + 
+                		"VPmbtvZQmsQx/Q639oCD6aDR/NB3fh4S7ubAix8bhZ9b00+5TDSDQe2ba6N1EaX8\r\n" + 
+                		"aOVhvIRs0IO/DLflY1A9wr+GUbSjPQKHjFJ3ZctIrL6q+BFJiz0ozucnGLAySUdj\r\n" + 
+                		"LLHEpuM4fmu6sbg70omClFlMq3D4tsr2PpGQas0GraJvQT4WQEH9OAIuOEHOTghY\r\n" + 
+                		"n8h3P+GlQhNWQni5GuqSMx7EyolbvV2M+uy2HAxAlA9u4ugJYFw5wxQPj0tuBr+f\r\n" + 
+                		"xXWeGKJNzOrorOl/d7B2JKRvV/hoVTZceVG7c0tX5ABi0udsd0X+wirF9cxSUZNo\r\n" + 
+                		"BQIDAQAB")
+                .put("permissionsClaimKey", "realm_access/roles")
+                .put("issuer", "token-issuer");
+        return JWTAuth.create(vertx, authConfig);
     }
-
+    
     private JWTAuth getJWTAuthProviderForTokenGeneration() {
-    	JsonObject authConfig = new JsonObject()
-            .put("keyStore", new JsonObject()
-                .put("path", "keystore.jceks")
-                .put("type", "jceks")
-                .put("password", "secret"))
-            .put("permissionsClaimKey", "realm_access/roles")
-            .put("issuer", "token-issuer");
-    	return JWTAuth.create(vertx, authConfig);
+        JsonObject authConfig = new JsonObject()
+                .put("keyStore", new JsonObject()
+                    .put("path", "keystore.jceks")
+                    .put("type", "jceks")
+                    .put("password", "secret"))
+                .put("permissionsClaimKey", "realm_access/roles")
+                .put("issuer", "token-issuer");
+        return JWTAuth.create(vertx, authConfig);
     }
-
+    
     private String generateTokenWithRole(String role, boolean valid) {
-    	JWTAuth auth = getJWTAuthProviderForTokenGeneration();
-    	long now = System.currentTimeMillis()/1000;
-    	JsonObject payload = new JsonObject()
-             .put("sub", "user")
-             .put("exp", valid ? now + (10*60) : now - 60)
-   	     .put("iat", valid ? now - 60 : now - (3*60))
-       	     .put("iss", "token-issuer")
-             .put("realm_access", new JsonObject()
-             .put("roles", new JsonArray().add(role)));
+        JWTAuth auth = getJWTAuthProviderForTokenGeneration();
+        long now = System.currentTimeMillis()/1000;
+        JsonObject payload = new JsonObject()
+            .put("sub", "user")
+            .put("exp", valid ? now + (10*60) : now - 60)
+            .put("iat", valid ? now - 60 : now - (3*60))
+            .put("iss", "token-issuer")
+            .put("realm_access", new JsonObject()
+                .put("roles", new JsonArray().add(role)));
         return auth.generateToken(payload, new JWTOptions().setAlgorithm("RS256"));
-   }
+    }
 
 }
