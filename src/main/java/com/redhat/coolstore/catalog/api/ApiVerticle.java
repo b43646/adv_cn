@@ -15,18 +15,29 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
 
+import io.vertx.ext.auth.jwt.JWTAuth;
+import io.vertx.ext.web.handler.AuthHandler;
+import io.vertx.ext.web.handler.JWTAuthHandler;
+
 public class ApiVerticle extends AbstractVerticle {
 
     private CatalogService catalogService;
+    private JWTAuth jwtAuth;
 
-    public ApiVerticle(CatalogService catalogService) {
+    public ApiVerticle(CatalogService catalogServicei, JWTAuth jwtAuth) {
         this.catalogService = catalogService;
+	this.jwtAuth = jwtAuth;
     }
 
     @Override
     public void start(Future<Void> startFuture) throws Exception {
 
+        AuthHandler authHandler = JWTAuthHandler.create(jwtAuth).addAuthority("coolstore");
+
         Router router = Router.router(vertx);
+
+        router.route().pathRegex("/product.*").handler(authHandler);
+
         router.get("/products").handler(this::getProducts);
         router.get("/product/:itemId").handler(this::getProduct);
         router.route("/product").handler(BodyHandler.create());

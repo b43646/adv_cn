@@ -13,6 +13,8 @@ import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonObject;
 
+import io.vertx.ext.auth.jwt.JWTAuth;
+
 public class MainVerticle extends AbstractVerticle {
 
     @Override
@@ -49,6 +51,12 @@ public class MainVerticle extends AbstractVerticle {
 
     private void deployVerticles(JsonObject config, Future<Void> startFuture) {
 
+	JsonObject authConfig = new JsonObject()
+            .put("public-key", "DUMMYKEY")
+            .put("permissionsClaimKey", "realm_access/roles")
+            .put("issuer", "token-issuer");
+        JWTAuth jwtAuth = JWTAuth.create(vertx, authConfig);
+
         Future<String> apiVerticleFuture = Future.future();
         Future<String> catalogVerticleFuture = Future.future();
 
@@ -56,7 +64,7 @@ public class MainVerticle extends AbstractVerticle {
         DeploymentOptions options = new DeploymentOptions();
         options.setConfig(config);
         vertx.deployVerticle(new CatalogVerticle(), options, catalogVerticleFuture.completer());
-        vertx.deployVerticle(new ApiVerticle(catalogService), options, apiVerticleFuture.completer());
+        vertx.deployVerticle(new ApiVerticle(catalogService, jwtAuth), options, apiVerticleFuture.completer());
 
         CompositeFuture.all(apiVerticleFuture, catalogVerticleFuture).setHandler(ar -> {
             if (ar.succeeded()) {
